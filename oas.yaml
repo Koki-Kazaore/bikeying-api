@@ -240,108 +240,56 @@ components:
       bearerFormat: JWT
 
   schemas:
-    BikeStatus:
+    BikeStatusSchema:
+      type: string
+      enum:
+        - available
+        - in_use
+        - maintenance
+      default: maintenance
+
+    LocationSchema:
       type: object
+      required:
+        - latitude
+        - longitude
       properties:
-        bikeId:
-          type: string
-          description: 自転車ID
-        status:
-          type: string
-          description: 現在のステータス
-    BikeStatusUpdate:
+        latitude:
+          type: number
+          description: latitude
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          description: longitude
+          minimum: -180
+          maximum: 180
+
+    CreateBikeSchema:
       type: object
+      required:
+        - location
       properties:
-        status:
-          type: string
-          description: 更新するステータス
-    Bike:
-      type: object
-      properties:
-        bikeId:
-          type: string
-          description: 自転車ID
         model:
           type: string
-          description: モデル名
-        location:
-          type: string
-          description: 現在の位置
-    BikeAssignment:
-      type: object
-      properties:
-        bikeId:
-          type: string
-          description: 割り当てられた自転車ID
-    BikeRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-          description: ユーザID
-        coordinates:
-          type: string
-          description: 現在地の座標
-    BikeReservation:
-      type: object
-      properties:
-        bikeId:
-          type: string
-          description: 予約する自転車ID
-        userId:
-          type: string
-          description: ユーザID
-    UserSignup:
-      type: object
-      properties:
-        username:
-          type: string
-          description: ユーザ名
-        password:
-          type: string
-          description: パスワード
-    UserLogin:
-      type: object
-      properties:
-        username:
-          type: string
-          description: ユーザ名
-        password:
-          type: string
-          description: パスワード
-    AuthToken:
-      type: object
-      properties:
-        token:
-          type: string
-          description: 認証トークン
-    UserProfile:
-      type: object
-      properties:
-        userId:
-          type: string
-          description: ユーザID
-        username:
-          type: string
-          description: ユーザ名
-        email:
-          type: string
-          description: メールアドレス
-    UserProfileUpdate:
-      type: object
-      properties:
-        username:
-          type: string
-          description: 新しいユーザ名
-        email:
-          type: string
-          description: 新しいメールアドレス
-    LockStatus:
-      type: object
-      properties:
-        lockId:
-          type: string
-          description: ロックID
+          description: model name
         status:
+          $ref: '#/components/schemas/BikeStatusSchema'
+        location:
+          $ref: '#/components/schemas/LocationSchema'
+
+    GetBikeSchema:
+      type: object
+      required:
+        - bikeId
+        - status
+        - location
+      properties:
+        bikeId:
           type: string
-          description: 現在の状態（施錠/解錠）
+          format: uuid
+          description: bike ID
+        status:
+          $ref: '#/components/schemas/BikeStatusSchema'
+        location:
+          $ref: '#/components/schemas/LocationSchema'

@@ -5,12 +5,17 @@ from starlette.responses import Response
 from starlette import status
 
 from bikes.app import app
+# import pydantic model to be used for verification
+from bikes.api.schemas import CreateBikeSchema
 
 # define a bike object to response
 bikes = {
   "bikeId": "bike_123456",
   "status": "available",
-  "location": [35.681236, 139.767125]
+  "location": {
+    "latitude": 35.681236,
+    "longtitude": 139.767125
+  }
 }
 
 # /bikes endpoint
@@ -21,7 +26,7 @@ def get_bikes():
 
 # Specify that the response status code is 201(Created)
 @app.post("/bikes", status_code=status.HTTP_201_CREATED)
-def create_bike():
+def create_bike(bike_details: CreateBikeSchema):
   return bikes
 
 # define URL parameters such as bike_id in curly brackets
@@ -31,7 +36,7 @@ def get_bike(bike_id: UUID):
   return bikes
 
 @app.put("/bikes/{bike_id}")
-def update_bike(bike_id: UUID):
+def update_bike(bike_id: UUID, order_details: CreateBikeSchema):
   return bikes
 
 @app.delete("/bikes/{bike_id}", status_code=status.HTTP_204_NO_CONTENT)
