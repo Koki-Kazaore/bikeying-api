@@ -1,194 +1,347 @@
-openapi: 3.0.3
-
+openapi: 3.0.0
 info:
   title: Bikeying API
-  description: API that allows you to enable shared bike services anywhere. Supports bike allocation, usage, user management, and smart lock operation.
-  version: 1.0.0
+  version: '1.0'
+  description: BikeyingサービスのAPI定義書
 
 servers:
-  - url: http://localhost:8000
-    description: URL for local development and testing
-  - url: https://bikeying.com
-    description: main production server
-  - url: https://bikeying-staging.com
-    description: staging server for testing purposes only
+  - url: 'https://api.bikeying.com'
 
 paths:
   /bikes:
     get:
-      summary: Returns a assigned bike
-      operationId: getBike
-      description: Returns a assigned bike.
+      summary: 自転車の現在の利用ステータスを取得する
+      security:
+        - BearerAuth: []
       responses:
         '200':
-          description: A assigned bike
+          description: ステータス取得成功
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  bikes:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/GetBikeSchema'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                type: array
+                items:
+                  $ref: '#/components/schemas/BikeStatus'
+    put:
+      summary: 自転車の現在の利用ステータスを更新する
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: 更新するステータス情報
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BikeStatusUpdate'
+      responses:
+        '200':
+          description: ステータス更新成功
+    post:
+      summary: シェアリング可能な自転車を追加する
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: 追加する自転車の情報
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bike'
+      responses:
+        '201':
+          description: 自転車追加成功
+    delete:
+      summary: 自転車をシェアリングの対象から削除する
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: 自転車削除成功
+
+  /bikes/dispatch:
+    get:
+      summary: ストックされたリクエストから最適な自転車を割り当てる
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 自転車割り当て成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BikeAssignment'
 
   /bikes/request:
     post:
-      summary: Stock bike requests
-      operationId: stockRequest
-      description: >
-        Users search for bikes by location and criteria.
-        Requests are stocked and assigned later.
+      summary: ユーザの条件に基づいたリクエストをストックする
+      security:
+        - BearerAuth: []
       requestBody:
+        description: リクエスト情報
         required: true
         content:
           application/json:
             schema:
-                $ref: '#/components/schemas/RequestBikeSchema'
+              $ref: '#/components/schemas/BikeRequest'
       responses:
-        '202':
-          description: Indicates that the request has been accepted and stocked.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  requestId:
-                    type: string
-                    example: "req_123456"
-                  message:
-                    type: string
-                    example: "Request successfully accepted and stocked"
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+        '201':
+          description: リクエストストック成功
 
   /bikes/reserve:
     post:
-      summary: Reserve a bike
-      operationId: reserveBike
-      description: >
-        Reserve a bike for a user.
-        The bike is locked and reserved for the user.
+      summary: 特定の自転車の利用を確定・予約する
+      security:
+        - BearerAuth: []
       requestBody:
+        description: 予約情報
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReserveBikeSchema'
+              $ref: '#/components/schemas/BikeReservation'
       responses:
         '200':
-          description: Bike successfully reserved
+          description: 予約成功
+
+  /users/signup:
+    post:
+      summary: 新規ユーザ登録
+      requestBody:
+        description: 登録情報
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignup'
+      responses:
+        '201':
+          description: ユーザ登録成功
+
+  /users/login:
+    post:
+      summary: ユーザのログイン処理
+      requestBody:
+        description: ログイン情報
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: ログイン成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetBikeSchema'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: '#/components/schemas/AuthToken'
+
+  /users/logout:
+    post:
+      summary: ユーザのログアウト処理
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+
+  /users/{userId}:
+    get:
+      summary: ユーザのプロフィール情報を取得する
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: プロフィール取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+    put:
+      summary: ユーザのプロフィール情報を更新する
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: 更新するプロフィール情報
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: プロフィール更新成功
+
+  /{lockId}/unlock:
+    post:
+      summary: 指定されたスマートロックを解錠する
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lockId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 解錠成功
+
+  /{lockId}/lock:
+    post:
+      summary: 指定されたスマートロックを施錠する
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lockId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 施錠成功
+
+  /{lockId}/status:
+    get:
+      summary: スマートロックの状態を取得する
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lockId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 状態取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockStatus'
 
 components:
-  responses:
-    NotFound:
-      description: The specified resource was not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    UnprocessableEntity:
-      description: The payload contains invalid values.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
   securitySchemes:
-    openId:
-      type: openIdConnect
-      openIdConnectUrl: https://bikeying.com/.well-known/openid-configuration
-    oauth2:
-      type: oauth2
-      flows:
-        clientCredentials:
-          tokenUrl: https://bikeying.com/oauth/token
-          scopes: {}
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 
   schemas:
-    Error:
+    BikeStatus:
       type: object
-      properties:
-        detail:
-          oneOf:
-            - type: string
-            - type: array
-      required:
-        - detail
-
-    ReserveBikeSchema:
-      type: object
-      required:
-        - userId
-        - bikeId
-      properties:
-        userId:
-          type: string
-          example: "123456"
-          description: User ID making the reservation
-        bikeId:
-          type: string
-          example: "bike_123456"
-          description: Bike ID to reserve
-
-    RequestBikeSchema:
-      type: object
-      required:
-        - userId
-        - location
-      properties:
-        userId:
-          type: string
-          example: "123456"
-          description: User ID making the reservation
-        location:
-          type: array
-          description: Array of latitude and longitude
-          items:
-            type: number
-          minItems: 2
-          maxItems: 2
-          example: [35.681236, 139.767125]
-
-    GetBikeSchema:
-      type: object
-      required:
-        - bikeId
-        - status
-        - location
       properties:
         bikeId:
           type: string
-          example: "bike_123456"
+          description: 自転車ID
         status:
           type: string
-          example: "available"
+          description: 現在のステータス
+    BikeStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          description: 更新するステータス
+    Bike:
+      type: object
+      properties:
+        bikeId:
+          type: string
+          description: 自転車ID
+        model:
+          type: string
+          description: モデル名
         location:
-          type: array
-          items:
-            type: number
-          minItems: 2
-          maxItems: 2
-          example: [35.681236, 139.767125]
-
-security:
-  - oauth2:
-    - getBike
-    - stockRequest
-    - reserveBike
-  - bearerAuth:
-    - getBike
-    - stockRequest
-    - reserveBike
+          type: string
+          description: 現在の位置
+    BikeAssignment:
+      type: object
+      properties:
+        bikeId:
+          type: string
+          description: 割り当てられた自転車ID
+    BikeRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ユーザID
+        coordinates:
+          type: string
+          description: 現在地の座標
+    BikeReservation:
+      type: object
+      properties:
+        bikeId:
+          type: string
+          description: 予約する自転車ID
+        userId:
+          type: string
+          description: ユーザID
+    UserSignup:
+      type: object
+      properties:
+        username:
+          type: string
+          description: ユーザ名
+        password:
+          type: string
+          description: パスワード
+    UserLogin:
+      type: object
+      properties:
+        username:
+          type: string
+          description: ユーザ名
+        password:
+          type: string
+          description: パスワード
+    AuthToken:
+      type: object
+      properties:
+        token:
+          type: string
+          description: 認証トークン
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ユーザID
+        username:
+          type: string
+          description: ユーザ名
+        email:
+          type: string
+          description: メールアドレス
+    UserProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+          description: 新しいユーザ名
+        email:
+          type: string
+          description: 新しいメールアドレス
+    LockStatus:
+      type: object
+      properties:
+        lockId:
+          type: string
+          description: ロックID
+        status:
+          type: string
+          description: 現在の状態（施錠/解錠）
