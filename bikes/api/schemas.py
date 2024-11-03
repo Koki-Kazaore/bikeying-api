@@ -28,8 +28,8 @@ class CreateBikeSchema(BaseModel):
     return value
 
 class GetBikeSchema(BaseModel):
-  bike_id: UUID
-  model: str
+  id: UUID
+  model: Optional[str] = None
   status: BikeStatus
   location: LocationSchema
 
