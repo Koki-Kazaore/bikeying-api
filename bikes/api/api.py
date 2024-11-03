@@ -1,6 +1,7 @@
 import uuid
 
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -12,7 +13,8 @@ from bikes.app import app
 from bikes.api.schemas import (
   GetBikeSchema,
   CreateBikeSchema,
-  GetBikesSchema
+  GetBikesSchema,
+  BikeStatus
 )
 
 # represent in-memory bike lists as Python lists
@@ -21,8 +23,29 @@ BIKES = []
 # /bikes endpoint
 # @app.get("/bikes", response_model=List[GetBikeSchema])
 @app.get("/bikes", response_model=GetBikesSchema)
-def get_bikes():
-  return {'bikes': BIKES}
+# Add URL query parameters to function signature
+def get_bikes(status: Optional[BikeStatus] = None, limit: Optional[int] = None):
+  # Returns control immiediately if no parameters are set
+  if status is None and limit is None:
+    return {'bikes': BIKES}
+
+  # Narrow the list to query_set if either parameter is set
+  query_set = BIKES
+
+  # check if status is set
+  if status is not None:
+    query_set = [
+      bike
+      for bike in query_set
+      if bike['status'] == status
+    ]
+
+  # If limit is set and its value is less than the size of the query_set,
+  # returns a sbuset of query_set
+  if limit is not None and len(query_set) > limit:
+    return {'bikes': query_set[:limit]}
+
+  return {'bikes': query_set}
 
 # Specify that the response status code is 201(Created)
 @app.post(
