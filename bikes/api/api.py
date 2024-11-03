@@ -1,6 +1,9 @@
+import uuid
+
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import HTTPException
 from starlette.responses import Response
 from starlette import status
 
@@ -12,21 +15,14 @@ from bikes.api.schemas import (
   GetBikesSchema
 )
 
-# define a bike object to response
-bikes = {
-  "id": "601e69ec-4f29-490d-a14f-be0184742640",
-  "status": "available",
-  "location": {
-    "latitude": 35.681236,
-    "longitude": 139.767125
-  }
-}
+# represent in-memory bike lists as Python lists
+BIKES = []
 
 # /bikes endpoint
 # @app.get("/bikes", response_model=List[GetBikeSchema])
 @app.get("/bikes", response_model=GetBikesSchema)
 def get_bikes():
-  return {'bikes': [bikes]}
+  return {'bikes': BIKES}
 
 # Specify that the response status code is 201(Created)
 @app.post(
@@ -35,19 +31,49 @@ def get_bikes():
   response_model=GetBikeSchema
 )
 def create_bike(bike_details: CreateBikeSchema):
-  return bikes
+  # convert each bike to a dictionary
+  bike = bike_details.model_dump()
+  # extend order object with server-side attributes such as ID
+  bike['id'] = uuid.uuid4()
+  bike['created_at'] = datetime.now()
+  # to create a bike add that bike to the BIKES list
+  BIKES.append(bike)
+  # return the created bike after adding it to the list
+  return bike
 
 # define URL parameters such as bike_id in curly brackets
 @app.get("/bikes/{bike_id}", response_model=GetBikeSchema)
 def get_bike(bike_id: UUID):
   # get a URL parameter as an argument
-  return bikes
+  # to search by bike_id, process the BIKES list in order and check ID
+  for bike in BIKES:
+    if bike['id'] == bike_id:
+      return bike
+  # if the bike is not found, raise an exception
+  # generate HTTPException and return a 404 status code
+  raise HTTPException(
+    status_code=404, detail=f'Bike with ID {bike_id} not found'
+  )
 
 @app.put("/bikes/{bike_id}", response_model=GetBikeSchema)
 def update_bike(bike_id: UUID, order_details: CreateBikeSchema):
-  return bikes
+  for bike in BIKES:
+    if bike['id'] == bike_id:
+      bike.update(order_details.model_dump())
+      return bike
+  raise HTTPException(
+    status_code=404, detail=f'Bike with ID {bike_id} not found'
+  )
 
-@app.delete("/bikes/{bike_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/bikes/{bike_id}",
+            status_code=status.HTTP_204_NO_CONTENT,
+            response_class=Response)
 def delete_bike(bike_id: UUID):
-  # return Response(status_code=status.HTTP_204_NO_CONTENT)
-  return bikes
+  # delete a bike from the BIKES list with list.pop() method
+  for index, bike in enumerate(BIKES):
+    if bike['id'] == bike_id:
+      BIKES.pop(index)
+      return Response(status_code=status.HTTP_204_NO_CONTENT)
+  raise HTTPException(
+    status_code=404, detail=f'Bike with ID {bike_id} not found'
+  )

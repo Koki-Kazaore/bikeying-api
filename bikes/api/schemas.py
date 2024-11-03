@@ -20,6 +20,7 @@ class LocationSchema(BaseModel):
 class CreateBikeSchema(BaseModel):
   # specify the default value
   status: Optional[BikeStatus] = 'maintenance'
+  model: Optional[str] = None
   location: LocationSchema
 
   @field_validator('status')
