@@ -41,6 +41,7 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
                 properties:
                   bikes:
                     type: array
@@ -331,6 +332,7 @@ components:
             - type: array
       required:
         - detail
+      additionalProperties: false
 
     BikeStatusSchema:
       type: string
@@ -341,6 +343,7 @@ components:
       default: maintenance
 
     LocationSchema:
+      additionalProperties: false
       type: object
       required:
         - latitude
@@ -358,6 +361,7 @@ components:
           maximum: 180
 
     CreateBikeSchema:
+      additionalProperties: false
       type: object
       required:
         - location
@@ -371,6 +375,7 @@ components:
           $ref: '#/components/schemas/LocationSchema'
 
     GetBikeSchema:
+      additionalProperties: false
       type: object
       required:
         - bikeId

@@ -17,11 +17,18 @@ class LocationSchema(BaseModel):
   latitude: float
   longitude: float
 
+  # Use Config to prohibit properties not defined in the schema
+  class Config:
+    extra = 'forbid'
+
 class CreateBikeSchema(BaseModel):
   # specify the default value
   status: Optional[BikeStatus] = 'maintenance'
   model: Optional[str] = None
   location: LocationSchema
+
+  class Config:
+    extra = 'forbid'
 
   @field_validator('status')
   def status_non_nullable(cls, value):
