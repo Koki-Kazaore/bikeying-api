@@ -70,7 +70,7 @@ paths:
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
 
-  /bikes/{bikeId}:
+  /bikes/{bike_id}:
     parameters:
       - in: path
         name: bike_id
@@ -302,7 +302,7 @@ paths:
   #               $ref: '#/components/schemas/LockStatus'
 
 components:
-  response:
+  responses:
     NotFound:
       description: The specified resource was not found.
       content:
