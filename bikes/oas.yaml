@@ -127,19 +127,6 @@ paths:
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
 
-  # /bikes/dispatch:
-  #   get:
-  #     summary: ストックされたリクエストから最適な自転車を割り当てる
-  #     security:
-  #       - BearerAuth: []
-  #     responses:
-  #       '200':
-  #         description: 自転車割り当て成功
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: '#/components/schemas/BikeAssignment'
-
   # /bikes/request:
   #   post:
   #     summary: ユーザの条件に基づいたリクエストをストックする

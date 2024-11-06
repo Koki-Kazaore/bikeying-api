@@ -21,6 +21,9 @@ $ uvicorn main:app --reload
 
 # To launch a specific file
 $ uvicorn bikes.app:app --reload
+
+# To launch with flask
+$ flask run --reload
 ```
 
 ### API　Documentation
