@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Extra, conint, conlist, validator
 
 #　Declare an enumerated schema
 class BikeStatus(Enum):
@@ -30,7 +30,7 @@ class CreateBikeSchema(BaseModel):
   class Config:
     extra = 'forbid'
 
-  @field_validator('status')
+  @validator('status')
   def status_non_nullable(cls, value):
     assert value is not None, 'status may not be None'
     return value

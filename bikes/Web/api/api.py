@@ -8,9 +8,9 @@ from fastapi import HTTPException
 from starlette.responses import Response
 from starlette import status
 
-from bikes.app import app
+from bikes.Web.app import app
 # import pydantic model to be used for verification
-from bikes.api.schemas import (
+from bikes.Web.api.schemas import (
   GetBikeSchema,
   CreateBikeSchema,
   GetBikesSchema,
