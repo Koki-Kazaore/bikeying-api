@@ -22,7 +22,7 @@ class BikeModel(Base):
   model = Column(String)
   status = Column(String, nullable=False, default='maintenance')
   # Define a relationship with the Location model
-  location = relationship('LocationModel', backref='bikes')
+  location = relationship('LocationModel', backref='bikes', uselist=False)
   created_at = Column(DateTime, default=datetime.now)
   updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
@@ -47,7 +47,6 @@ class LocationModel(Base):
 
   def dict(self):
     return {
-      'id': self.id,
       'latitude': self.latitude,
       'longitude': self.longitude
     }

@@ -18,12 +18,12 @@ class Bike:
     self._bike = bike_
     # IDs are resolved dynamically,
     # so the specified ID is stored as a private property
-    self.id = id
+    self._id = id
     self.model = model
-    self.status = status
+    self._status = status
     self.location = location
-    self.created_at = created_at
-    self.updated_at = updated_at
+    self._created_at = created_at
+    self._updated_at = updated_at
 
   # Resolve IDs dynamically using property() decorator
   @property
@@ -32,15 +32,25 @@ class Bike:
 
   @property
   def created_at(self):
-    return self._created_at or self._bike.created_at
+    return self._created_at or (self._bike.created_at if self._bike else None)
 
   @property
   def updated_at(self):
-    return self._updated_at or self._bike.updated_at
+    return self._updated_at or (self._bike.updated_at if self._bike else None)
 
   @property
   def status(self):
     return self._status or self._bike.status
+
+  def to_dict(self):
+    return {
+      'id': self.id,
+      'model': self.model,
+      'status': self.status,
+      'location': self.location,
+      'created_at': self.created_at,
+      'updated_at': self.updated_at
+    }
 
   def dispatch(self):
     # Call Dispatch API to dispatch a bike

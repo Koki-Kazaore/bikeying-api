@@ -8,6 +8,10 @@ from fastapi import HTTPException
 from starlette.responses import Response
 from starlette import status
 
+from bikes.bikes_service.exceptions import BikeNotFoundError
+from bikes.bikes_service.bikes_service import BikesService
+from bikes.repository.bikes_repository import BikesRepository
+from bikes.repository.unit_of_work import UnitOfWork
 from bikes.Web.app import app
 # import pydantic model to be used for verification
 from bikes.Web.api.schemas import (
@@ -17,35 +21,19 @@ from bikes.Web.api.schemas import (
   BikeStatus
 )
 
-# represent in-memory bike lists as Python lists
-BIKES = []
-
 # /bikes endpoint
 # @app.get("/bikes", response_model=List[GetBikeSchema])
 @app.get("/bikes", response_model=GetBikesSchema)
 # Add URL query parameters to function signature
 def get_bikes(status: Optional[BikeStatus] = None, limit: Optional[int] = None):
-  # Returns control immiediately if no parameters are set
-  if status is None and limit is None:
-    return {'bikes': BIKES}
-
-  # Narrow the list to query_set if either parameter is set
-  query_set = BIKES
-
-  # check if status is set
-  if status is not None:
-    query_set = [
-      bike
-      for bike in query_set
-      if bike['status'] == status
-    ]
-
-  # If limit is set and its value is less than the size of the query_set,
-  # returns a sbuset of query_set
-  if limit is not None and len(query_set) > limit:
-    return {'bikes': query_set[:limit]}
-
-  return {'bikes': query_set}
+  # Start Unit of Work context
+  with UnitOfWork() as unit_of_work:
+    repo = BikesRepository(unit_of_work.session)
+    bikes_service = BikesService(repo)
+    results = bikes_service.list_bikes(
+      status=status, limit=limit
+    )
+  return {'bikes': [result.to_dict() for result in results]}
 
 # Specify that the response status code is 201(Created)
 @app.post(
@@ -53,50 +41,60 @@ def get_bikes(status: Optional[BikeStatus] = None, limit: Optional[int] = None):
   status_code=status.HTTP_201_CREATED,
   response_model=GetBikeSchema
 )
-def create_bike(bike_details: CreateBikeSchema):
-  # convert each bike to a dictionary
-  bike = bike_details.model_dump()
-  # extend order object with server-side attributes such as ID
-  bike['id'] = uuid.uuid4()
-  bike['created_at'] = datetime.now()
-  # to create a bike add that bike to the BIKES list
-  BIKES.append(bike)
-  # return the created bike after adding it to the list
-  return bike
+def create_bike(payload: CreateBikeSchema):
+  with UnitOfWork() as unit_of_work:
+    repo = BikesRepository(unit_of_work.session)
+    bikes_service = BikesService(repo)
+    bike = payload.model_dump()
+    # Add a bike to the database
+    bike = bikes_service.add_bike(bike)
+    unit_of_work.commit()
+    # Access bike dictionary expression before exiting the context
+    # print(bike.model_dump())
+    return_payload = bike.to_dict()
+  return return_payload
 
 # define URL parameters such as bike_id in curly brackets
 @app.get("/bikes/{bike_id}", response_model=GetBikeSchema)
 def get_bike(bike_id: UUID):
-  # get a URL parameter as an argument
-  # to search by bike_id, process the BIKES list in order and check ID
-  for bike in BIKES:
-    if bike['id'] == bike_id:
-      return bike
-  # if the bike is not found, raise an exception
-  # generate HTTPException and return a 404 status code
-  raise HTTPException(
-    status_code=404, detail=f'Bike with ID {bike_id} not found'
-  )
+  # Capture Order Not Found Error exception using try-except block
+  try:
+    with UnitOfWork() as unit_of_work:
+      repo = BikesRepository(unit_of_work.session)
+      bikes_service = BikesService(repo)
+      bike = bikes_service.get_bike(bike_id=bike_id)
+    return bike.to_dict()
+  except BikeNotFoundError:
+    raise HTTPException(
+      status_code=404, detail=f'Bike with ID {bike_id} not found'
+    )
 
 @app.put("/bikes/{bike_id}", response_model=GetBikeSchema)
 def update_bike(bike_id: UUID, order_details: CreateBikeSchema):
-  for bike in BIKES:
-    if bike['id'] == bike_id:
-      bike.update(order_details.model_dump())
-      return bike
-  raise HTTPException(
-    status_code=404, detail=f'Bike with ID {bike_id} not found'
-  )
+  try:
+    with UnitOfWork() as unit_of_work:
+      repo = BikesRepository(unit_of_work.session)
+      bikes_service = BikesService(repo)
+      bike = order_details.model_dump()
+      bike = bikes_service.update_bike(bike_id=bike_id, bike_info=bike)
+      unit_of_work.commit()
+    return bike.to_dict()
+  except BikeNotFoundError:
+    raise HTTPException(
+      status_code=404, detail=f'Bike with ID {bike_id} not found'
+    )
 
 @app.delete("/bikes/{bike_id}",
             status_code=status.HTTP_204_NO_CONTENT,
             response_class=Response)
 def delete_bike(bike_id: UUID):
-  # delete a bike from the BIKES list with list.pop() method
-  for index, bike in enumerate(BIKES):
-    if bike['id'] == bike_id:
-      BIKES.pop(index)
-      return Response(status_code=status.HTTP_204_NO_CONTENT)
-  raise HTTPException(
-    status_code=404, detail=f'Bike with ID {bike_id} not found'
-  )
+  try:
+    with UnitOfWork() as unit_of_work:
+      repo = BikesRepository(unit_of_work.session)
+      bikes_service = BikesService(repo)
+      bikes_service.delete_bike(bike_id=bike_id)
+      unit_of_work.commit()
+  except BikeNotFoundError:
+    raise HTTPException(
+      status_code=404, detail=f'Bike with ID {bike_id} not found'
+    )

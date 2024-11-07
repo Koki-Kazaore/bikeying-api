@@ -9,11 +9,11 @@ class BikesRepository:
   def add(self, bike):
     # Create a new BikeModel record
     record = BikeModel(
-      model=bike.model,
-      status=bike.status.value,
+      model=bike['model'],
+      status=bike['status'].value,
       location=LocationModel(
-        latitude=bike.location.latitude,
-        longitude=bike.location.longitude
+        latitude=bike['location']['latitude'],
+        longitude=bike['location']['longitude']
       )
     )
     # Add the object to the session
@@ -58,12 +58,12 @@ class BikesRepository:
     if record is not None:
       self.session.delete(record)
       record = BikeModel(
-        id=id_,
-        model=payload.model,
-        status=payload.status.value,
+        id=str(id_),
+        model=payload['model'],
+        status=payload['status'].value,
         location=LocationModel(
-          latitude=payload.location.latitude,
-          longitude=payload.location.longitude
+          latitude=payload['location']['latitude'],
+          longitude=payload['location']['longitude']
         )
       )
       self.session.add(record)

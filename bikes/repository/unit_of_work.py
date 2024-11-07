@@ -6,7 +6,7 @@ class UnitOfWork:
   def __init__(self):
     # Get session factory object
     self.session_maker = sessionmaker(
-      bind=create_engine('sqlite://bikes.db')
+      bind=create_engine('sqlite:///bikes.db')
     )
 
   def __enter__(self):
