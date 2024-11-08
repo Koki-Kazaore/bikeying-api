@@ -10,7 +10,7 @@
       "request": "launch",
       "module": "uvicorn",
       "args": [
-        "bikes.app:app",
+        "bikes.Web.app:app",
         "--reload"
       ],
       "jinja": true
