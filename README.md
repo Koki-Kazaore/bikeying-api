@@ -17,7 +17,7 @@ $ pipenv shell
 
 ### Server Startup
 ```bash
-$ uvicorn main:app --reload
+$ uvicorn app:app --reload
 
 # To launch a specific file
 $ uvicorn bikes.app:app --reload

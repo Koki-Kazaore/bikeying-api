@@ -43,3 +43,28 @@ class GetBikeSchema(BaseModel):
 
 class GetBikesSchema(BaseModel):
   bikes: List[GetBikeSchema]
+
+class DispatchRequestSchema(BaseModel):
+  tpep_pickup_datetime: datetime
+  tpep_dropoff_datetime: datetime
+  PULocation: LocationSchema
+  DOLocation: LocationSchema
+
+  class Config:
+    extra = 'forbid'
+
+class DispatchBikeSchema(BaseModel):
+  df_requests: List[DispatchRequestSchema]
+
+class DispatchedBikeSchema(BaseModel):
+  bike_id: str
+  user_queue_index: str
+
+  class Config:
+    extra = 'forbid'
+
+class GetDispatchedBikeSchema(BaseModel):
+  results: List[DispatchedBikeSchema]
+
+  class Config:
+    extra = 'forbid'

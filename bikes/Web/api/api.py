@@ -12,9 +12,9 @@ from bikes.bikes_service.exceptions import BikeNotFoundError
 from bikes.bikes_service.bikes_service import BikesService
 from bikes.repository.bikes_repository import BikesRepository
 from bikes.repository.unit_of_work import UnitOfWork
-from bikes.Web.app import app
+from app import app
 # import pydantic model to be used for verification
-from bikes.Web.api.schemas import (
+from schemas import (
   GetBikeSchema,
   CreateBikeSchema,
   GetBikesSchema,
@@ -22,7 +22,6 @@ from bikes.Web.api.schemas import (
 )
 
 # /bikes endpoint
-# @app.get("/bikes", response_model=List[GetBikeSchema])
 @app.get("/bikes", response_model=GetBikesSchema)
 # Add URL query parameters to function signature
 def get_bikes(status: Optional[BikeStatus] = None, limit: Optional[int] = None):

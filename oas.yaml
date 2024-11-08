@@ -11,6 +11,12 @@ servers:
   - url: 'https://bikeying.com'
     description: main production server
 
+tags:
+  - name: Bike
+    description: 自転車のステータス管理や新規登録、詳細取得、更新・削除に関するサービス
+  - name: Dispatch
+    description: ユーザーのリクエストに応じた最適な自転車の割り当てを行うサービス
+
 paths:
   /bikes:
     get:
@@ -32,6 +38,8 @@ paths:
             minimum: 1
             maximum: 100
       summary: 自転車の現在の利用ステータスを取得する
+      tags:
+        - Bike
       operationId: getBikes
       description: 自転車の現在の利用ステータスを取得する
       responses:
@@ -52,6 +60,8 @@ paths:
 
     post:
       summary: シェアリング可能な自転車を追加する
+      tags:
+        - Bike
       operationId: createBike
       requestBody:
         description: 追加する自転車の情報
@@ -81,6 +91,8 @@ paths:
 
     get:
       summary: 特定の自転車の情報を取得する
+      tags:
+        - Bike
       operationId: getBike
       responses:
         '200':
@@ -96,6 +108,8 @@ paths:
 
     put:
       summary: 自転車の現在の利用ステータスを更新する
+      tags:
+        - Bike
       operationId: updateBike
       requestBody:
         description: 更新するステータス情報
@@ -118,6 +132,8 @@ paths:
 
     delete:
       summary: 自転車をシェアリングの対象から削除する
+      tags:
+        - Bike
       operationId: deleteBike
       responses:
         '204':
@@ -126,6 +142,27 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+
+  /dispatch:
+    post:
+      summary: ストックされたリクエストから最適な自転車を割り当てる
+      tags:
+        - Dispatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DispatchBikeSchema'
+      responses:
+        '201':
+          description: A JSON representation of the assigned bike
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDispatchedBikeSchema'
+        '400':
+          description: Invaild Input
 
   # /bikes/request:
   #   post:
@@ -377,6 +414,57 @@ components:
           $ref: '#/components/schemas/BikeStatusSchema'
         location:
           $ref: '#/components/schemas/LocationSchema'
+
+    DispatchBikeSchema:
+      type: object
+      properties:
+        df_requests:
+          type: array
+          items:
+            type: object
+            properties:
+              tpep_pickup_datetime:
+                type: string
+                format: date-time
+                description: リクエストの受付日時
+              tpep_dropoff_datetime:
+                type: string
+                format: date-time
+                description: リクエストの返却日時
+              PULocation:
+                $ref: '#/components/schemas/LocationSchema'
+              DOLocation:
+                $ref: '#/components/schemas/LocationSchema'
+            required:
+              - tpep_pickup_datetime
+              - tpep_dropoff_datetime
+              - PULocation
+              - DOLocation
+      required:
+        - df_requests
+
+    DispatchedBikeSchema:
+      type: object
+      properties:
+        bike_id:
+          type: string
+          description: Assigned bikd ID
+        user_queue_index:
+          type: string
+          description: リクエストID
+      required:
+        - bike_id
+        - user_queue_index
+
+    GetDispatchedBikeSchema:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DispatchedBikeSchema'
+      required:
+        - results
 
 security:
   - BearerAuth:
